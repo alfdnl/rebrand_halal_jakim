@@ -1,5 +1,6 @@
 from .scraper_interface import ScraperInterface
 from helper import categories
+from helper.utils import timer
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -92,6 +93,7 @@ class ScraperJakim(ScraperInterface):
             )
         return all_list
 
+    @timer
     def get_data_from_jakim_website(
         self,
     ):
