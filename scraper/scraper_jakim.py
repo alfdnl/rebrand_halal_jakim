@@ -79,8 +79,8 @@ class ScraperJakim(ScraperInterface):
         company_dict["company_brand"] = brand_name
         company_dict["company_halal_status"] = status
         company_dict["company_info_url"] = detailed_company_link
-        company_dict["state"] = detailed_company_link
-        company_dict["category"] = detailed_company_link
+        company_dict["state"] = state
+        company_dict["category"] = category
         return company_dict
 
     @staticmethod
