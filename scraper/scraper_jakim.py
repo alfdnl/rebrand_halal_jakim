@@ -41,12 +41,14 @@ class ScraperJakim(ScraperInterface):
 
     @staticmethod
     def get_last_page(soup: BeautifulSoup):
-        try:
-            last_page = int(
-                soup.find("table").find_all("a")[-1].attrs["href"].split("=")[-1]
-            )
-        except:
-            last_page = int(soup.find("table").find_all("a")[-1].text)
+        find_a_tags = soup.find("table").find_all("a")
+        if len(find_a_tags) > 1:
+            try:
+                last_page = int(find_a_tags[-1].attrs["href"].split("=")[-1])
+            except:
+                last_page = int(find_a_tags[-1].text)
+        else:
+            last_page = 1
         return last_page
 
     @staticmethod
@@ -55,7 +57,7 @@ class ScraperJakim(ScraperInterface):
         return adrress_text
 
     @staticmethod
-    def get_company_overview_info(company):
+    def get_company_overview_info(company, state, category):
         company_dict = {}
         name = company.find("span", {"class": "company-name"}).text.strip()
         address_text = ScraperJakim.address_to_text(
@@ -77,13 +79,17 @@ class ScraperJakim(ScraperInterface):
         company_dict["company_brand"] = brand_name
         company_dict["company_halal_status"] = status
         company_dict["company_info_url"] = detailed_company_link
+        company_dict["state"] = detailed_company_link
+        company_dict["category"] = detailed_company_link
         return company_dict
 
     @staticmethod
-    def get_all_company_overview_info(li_tag):
+    def get_all_company_overview_info(li_tag, state, category):
         all_list = []
         for company in li_tag.find_all("li", {"class": "clearfix search-result-data"}):
-            all_list.append(ScraperJakim.get_company_overview_info(company))
+            all_list.append(
+                ScraperJakim.get_company_overview_info(company, state, category)
+            )
         return all_list
 
     def get_data_from_jakim_website(
@@ -104,13 +110,17 @@ class ScraperJakim(ScraperInterface):
                 )
                 last_page = self.get_last_page(soup)
                 if last_page == 1:
-                    all_list_data.extend(self.get_all_company_overview_info(soup))
+                    all_list_data.extend(
+                        self.get_all_company_overview_info(soup, state, category)
+                    )
                 else:
                     for page_num in range(2, last_page + 1):
                         print(f"Currently craping:\nPage: {page_num}")
                         if page_num == 1:
                             all_list_data.extend(
-                                self.get_all_company_overview_info(soup)
+                                self.get_all_company_overview_info(
+                                    soup, state, category
+                                )
                             )
                         else:
                             new_soup = self.get_page_source(
@@ -119,7 +129,9 @@ class ScraperJakim(ScraperInterface):
                                 page_num=page_num,
                             )
                             all_list_data.extend(
-                                self.get_all_company_overview_info(new_soup)
+                                self.get_all_company_overview_info(
+                                    new_soup, state, category
+                                )
                             )
                         print(
                             f"Done Scrapping: \ncurrent url: {self._base_url + self._page_url}"
