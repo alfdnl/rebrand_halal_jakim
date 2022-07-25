@@ -40,3 +40,40 @@ class ScraperJakim(ScraperInterface):
             soup.find("table").find_all("a")[-1].attrs["href"].split("=")[-1]
         )
         return last_page
+
+    @staticmethod
+    def address_to_text(list_address):
+        adrress_text = "".join([str(i).replace("<br/>", " ") for i in list_address])
+        return adrress_text
+
+    @staticmethod
+    def get_company_overview_info(company):
+        company_dict = {}
+        name = company.find("span", {"class": "company-name"}).text.strip()
+        address_text = ScraperJakim.address_to_text(
+            company.find("span", {"class": "company-address"}).contents
+        )
+        brand_name = (
+            company.find("span", {"class": "company-brand"})
+            .text.split("JENAMA:")[-1]
+            .strip()
+        )
+        halal_status = company.find("i")
+        if halal_status != None:
+            status = halal_status.text.split("HALAL :")[-1].strip()
+        else:
+            status = None
+        detailed_company_link = company.find("img").attrs["onclick"].split("'")[1]
+        company_dict["company_name"] = name
+        company_dict["company_address"] = address_text
+        company_dict["company_brand"] = brand_name
+        company_dict["company_halal_status"] = status
+        company_dict["company_info_url"] = detailed_company_link
+        return company_dict
+
+    @staticmethod
+    def get_all_company_overview_info(li_tag):
+        all_list = []
+        for company in li_tag.find_all("li", {"class": "clearfix search-result-data"}):
+            all_list.append(ScraperJakim.get_company_overview_info(company))
+        return all_list
