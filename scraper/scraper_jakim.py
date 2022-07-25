@@ -1,6 +1,11 @@
-from scraper_interface import ScraperInterface
+from .scraper_interface import ScraperInterface
+from helper import categories
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+
+STATE_LIST = categories.STATE_LIST
+CATEGORY_LIST = categories.CATEGORY_LIST
 
 
 class ScraperJakim(ScraperInterface):
@@ -36,9 +41,12 @@ class ScraperJakim(ScraperInterface):
 
     @staticmethod
     def get_last_page(soup: BeautifulSoup):
-        last_page = int(
-            soup.find("table").find_all("a")[-1].attrs["href"].split("=")[-1]
-        )
+        try:
+            last_page = int(
+                soup.find("table").find_all("a")[-1].attrs["href"].split("=")[-1]
+            )
+        except:
+            last_page = int(soup.find("table").find_all("a")[-1].text)
         return last_page
 
     @staticmethod
@@ -77,3 +85,45 @@ class ScraperJakim(ScraperInterface):
         for company in li_tag.find_all("li", {"class": "clearfix search-result-data"}):
             all_list.append(ScraperJakim.get_company_overview_info(company))
         return all_list
+
+    def get_data_from_jakim_website(
+        self,
+    ):
+        all_list_data = []
+        for state in STATE_LIST:
+            print("*" * 50)
+            print("Current State: ", state)
+            for category in CATEGORY_LIST:
+                print("Current Category: ", category)
+                page_num = 1
+                soup = self.get_page_source(
+                    category_code=category, state_code=state, page_num=page_num
+                )
+                print(
+                    f"Done Scrapping: \ncurrent url: {self._base_url + self._page_url}"
+                )
+                last_page = self.get_last_page(soup)
+                if last_page == 1:
+                    all_list_data.extend(self.get_all_company_overview_info(soup))
+                else:
+                    for page_num in range(2, last_page + 1):
+                        print(f"Currently craping:\nPage: {page_num}")
+                        if page_num == 1:
+                            all_list_data.extend(
+                                self.get_all_company_overview_info(soup)
+                            )
+                        else:
+                            new_soup = self.get_page_source(
+                                category_code=category,
+                                state_code=state,
+                                page_num=page_num,
+                            )
+                            all_list_data.extend(
+                                self.get_all_company_overview_info(new_soup)
+                            )
+                        print(
+                            f"Done Scrapping: \ncurrent url: {self._base_url + self._page_url}"
+                        )
+                print("*" * 50)
+        df = pd.DataFrame(all_list_data)
+        df.to_csv("all_data_jakim.csv")
