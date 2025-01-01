@@ -1,3 +1,5 @@
 .ipynb_checkpoints
 dist
 halal_jakim.egg-info
+.DS_Store
+venv
