@@ -3,3 +3,6 @@ dist
 halal_jakim.egg-info
 .DS_Store
 venv
+.env
+*.pyc
+local.env
